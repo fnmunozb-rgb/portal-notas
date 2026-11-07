@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal de Consulta de Calificaciones</title>
+  <style>
+    :root {
+      --primary: #1a365d;
+      --primary-hover: #2b6cb0;
+      --bg: #f7fafc;
+      --card-bg: #ffffff;
+      --text: #2d3748;
+      --border: #e2e8f0;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 950px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: var(--primary);
+      margin-bottom: 25px;
+    }
+    .search-box {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+    input[type="text"] {
+      padding: 12px 15px;
+      font-size: 16px;
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      width: 280px;
+      outline: none;
+    }
+    input[type="text"]:focus {
+      border-color: var(--primary-hover);
+    }
+    button {
+      padding: 12px 25px;
+      font-size: 16px;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: var(--primary-hover);
+    }
+    .student-info {
+      background: #edf2f7;
+      padding: 15px 20px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .student-info p {
+      margin: 5px 0;
+      font-size: 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 13px;
+      display: none;
+    }
+    th, td {
+      border: 1px solid #cbd5e0;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #f1f5f9;
+      color: #1e293b;
+      font-weight: 700;
+    }
+    .header-main { background-color: #e2e8f0; }
+    .loading {
+      text-align: center;
+      font-weight: bold;
+      color: var(--primary);
+      display: none;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Consulta de Calificaciones</h1>
+  
+  <div class="search-box">
+    <input type="text" id="cedulaInput" placeholder="Ingrese el número de cédula..." maxlength="10">
+    <button onclick="buscarNotas()">Buscar</button>
+  </div>
+
+  <div class="loading" id="loadingText">Consultando base de datos...</div>
+
+  <div class="student-info" id="studentInfo">
+    <p><strong>Estudiante:</strong> <span id="nombreEstudiante">-</span></p>
+    <p><strong>Cédula:</strong> <span id="cedulaEstudiante">-</span></p>
+    <p><strong>Curso / Nivel:</strong> <span id="cursoEstudiante">-</span></p>
+  </div>
+
+  <table id="tablaNotas">
+    <thead>
+      <tr>
+        <th rowspan="2" class="header-main">MATERIA</th>
+        <th colspan="4" class="header-main">BIMESTRE I</th>
+        <th colspan="4" class="header-main">BIMESTRE II</th>
+        <th rowspan="2" class="header-main">PROMEDIO<br>FINAL</th>
+      </tr>
+      <tr>
+        <th>PROCESO<br>(70%)</th>
+        <th>EXAMEN<br>(15%)</th>
+        <th>PROYECTO<br>(15%)</th>
+        <th>NOTA<br>PERÍODO I</th>
+        <th>PROCESO<br>(70%)</th>
+        <th>EXAMEN<br>(15%)</th>
+        <th>PROYECTO<br>(15%)</th>
+        <th>NOTA<br>PERÍODO II</th>
+      </tr>
+    </thead>
+    <tbody id="cuerpoTabla">
+    </tbody>
+  </table>
+</div>
+
+<script>
+  // https://script.google.com/macros/s/AKfycbyWBNXzXNCtSfY17VkHxYlU_I7zc2aPi-21AZJ3WEMrmS8lxeHa8NXf4EDeGoEJrbYiMg/exec
+  const URL_WEB_APP = "AQUI_PEGA_TU_URL_DE_APPS_SCRIPT";
+
+  async function buscarNotas() {
+    const cedula = document.getElementById("cedulaInput").value.trim();
+    const loading = document.getElementById("loadingText");
+    const studentInfo = document.getElementById("studentInfo");
+    const tabla = document.getElementById("tablaNotas");
+    const cuerpoTabla = document.getElementById("cuerpoTabla");
+
+    if (!cedula) {
+      alert("Por favor, ingrese un número de cédula válido.");
+      return;
+    }
+
+    // Limpiar vista anterior
+    studentInfo.style.display = "none";
+    tabla.style.display = "none";
+    cuerpoTabla.innerHTML = "";
+    loading.style.display = "block";
+
+    try {
+      const response = await fetch(`${URL_WEB_APP}?cedula=${encodeURIComponent(cedula)}`);
+      const data = await response.json();
+
+      loading.style.display = "none";
+
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+
+      // Desplegar información general del estudiante
+      document.getElementById("nombreEstudiante").innerText = data.estudiante;
+      document.getElementById("cedulaEstudiante").innerText = data.cedula;
+      document.getElementById("cursoEstudiante").innerText = data.curso;
+      studentInfo.style.display = "block";
+
+      // Renderizar filas exactas correspondientes a la imagen de reporte
+      data.boletin.forEach(item => {
+        const fila = document.createElement("tr");
+        fila.innerHTML = `
+          <td style="text-align: left; font-weight: bold;">${item.materia}</td>
+          <td>${item.b1_proceso}</td>
+          <td>${item.b1_examen}</td>
+          <td>${item.b1_proyecto}</td>
+          <td style="font-weight: bold; background-color: #f8fafc;">${item.nota_periodo_1}</td>
+          <td>${item.b2_proceso}</td>
+          <td>${item.b2_examen}</td>
+          <td>${item.b2_proyecto}</td>
+          <td style="font-weight: bold; background-color: #f8fafc;">${item.nota_periodo_2}</td>
+          <td style="font-weight: bold; background-color: #edf2f7;">${item.promedio_final}</td>
+        `;
+        cuerpoTabla.appendChild(fila);
+      });
+
+      tabla.style.display = "table";
+
+    } catch (error) {
+      loading.style.display = "none";
+      console.error("Error en la consulta:", error);
+      alert("Ocurrió un error al conectar con Google Sheets. Verifica que la URL del script sea correcta.");
+    }
+  }
+</script>
+
+</body>
+</html>
